@@ -1,0 +1,490 @@
+<title>Dépôt Questionnaire SurveyCTO</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #f4f6f3;
+    --surface: #ffffff;
+    --ink: #16211d;
+    --ink-soft: #4a5a52;
+    --line: #d8ded7;
+    --line-strong: #a9b6ac;
+    --accent: #2c6e5e;
+    --accent-ink: #ffffff;
+    --accent-soft: #e2ede8;
+    --amber: #a5651c;
+    --amber-soft: #f5ead9;
+    --danger: #a13b30;
+    --danger-soft: #f7e6e2;
+    --focus: #2c6e5e;
+    --shadow: 0 1px 2px rgba(22, 33, 29, 0.06), 0 8px 24px -12px rgba(22, 33, 29, 0.18);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12211c;
+      --surface: #16261f;
+      --ink: #eef3ee;
+      --ink-soft: #a7b9ae;
+      --line: #2a3c33;
+      --line-strong: #3d5347;
+      --accent: #6cbba3;
+      --accent-ink: #0e1c17;
+      --accent-soft: #1c3830;
+      --amber: #e0a35c;
+      --amber-soft: #35291a;
+      --danger: #e2897a;
+      --danger-soft: #3a211d;
+      --focus: #6cbba3;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 32px -14px rgba(0, 0, 0, 0.55);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #12211c;
+    --surface: #16261f;
+    --ink: #eef3ee;
+    --ink-soft: #a7b9ae;
+    --line: #2a3c33;
+    --line-strong: #3d5347;
+    --accent: #6cbba3;
+    --accent-ink: #0e1c17;
+    --accent-soft: #1c3830;
+    --amber: #e0a35c;
+    --amber-soft: #35291a;
+    --danger: #e2897a;
+    --danger-soft: #3a211d;
+    --focus: #6cbba3;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 32px -14px rgba(0, 0, 0, 0.55);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    display: flex;
+    justify-content: center;
+    padding: clamp(24px, 5vw, 64px) 20px 80px;
+  }
+
+  .page {
+    width: 100%;
+    max-width: 640px;
+  }
+
+  .masthead {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .kicker {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  h1 {
+    font-family: "IBM Plex Serif", Georgia, serif;
+    font-weight: 500;
+    font-size: clamp(1.7rem, 3.4vw, 2.15rem);
+    line-height: 1.18;
+    text-wrap: balance;
+    margin: 6px 0 10px;
+  }
+
+  .intro {
+    color: var(--ink-soft);
+    font-size: 0.98rem;
+    line-height: 1.6;
+    max-width: 54ch;
+    margin: 0 0 28px;
+  }
+
+  form {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .field {
+    display: grid;
+    grid-template-columns: 34px 1fr;
+    gap: 14px;
+    padding: 22px 24px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .field:last-of-type { border-bottom: none; }
+
+  .step {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.78rem;
+    color: var(--accent);
+    padding-top: 3px;
+  }
+
+  .field-body { min-width: 0; }
+
+  label {
+    display: block;
+    font-weight: 600;
+    font-size: 0.94rem;
+    margin-bottom: 3px;
+  }
+
+  .hint {
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+    margin: 0 0 10px;
+    line-height: 1.5;
+  }
+
+  input[type="text"],
+  input[type="email"],
+  textarea,
+  select {
+    width: 100%;
+    font: inherit;
+    font-size: 0.96rem;
+    color: var(--ink);
+    background: var(--bg);
+    border: 1px solid var(--line-strong);
+    border-radius: 8px;
+    padding: 10px 12px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  textarea { resize: vertical; min-height: 76px; font-family: inherit; }
+
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible,
+  .drop:focus-within {
+    outline: none;
+    border-color: var(--focus);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+
+  .radio-row {
+    display: flex;
+    gap: 18px;
+    padding-top: 2px;
+  }
+
+  .radio-opt {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.92rem;
+    cursor: pointer;
+  }
+
+  .radio-opt input { accent-color: var(--accent); width: 15px; height: 15px; }
+
+  .drop {
+    border: 1.5px dashed var(--line-strong);
+    border-radius: 10px;
+    background: var(--bg);
+    padding: 18px 14px;
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .drop.dragover { border-color: var(--accent); background: var(--accent-soft); }
+
+  .drop input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  .drop-label {
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+  }
+
+  .drop-label strong { color: var(--accent); font-weight: 600; }
+
+  .file-chip {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    padding: 7px 10px;
+    background: var(--accent-soft);
+    border-radius: 7px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.8rem;
+    color: var(--ink);
+  }
+
+  .file-chip.show { display: inline-flex; }
+
+  .formats {
+    margin-top: 8px;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+  }
+
+  .actions {
+    padding: 20px 24px 24px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  button.submit {
+    font: inherit;
+    font-weight: 600;
+    font-size: 0.96rem;
+    color: var(--accent-ink);
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    padding: 12px 22px;
+    cursor: pointer;
+    transition: opacity 0.15s ease, transform 0.1s ease;
+  }
+
+  button.submit:hover { opacity: 0.92; }
+  button.submit:active { transform: translateY(1px); }
+  button.submit:disabled { opacity: 0.55; cursor: not-allowed; }
+
+  .status {
+    font-size: 0.86rem;
+    line-height: 1.5;
+  }
+
+  .status.success { color: var(--accent); }
+  .status.error { color: var(--danger); }
+
+  .banner {
+    display: none;
+    margin: 18px 0 0;
+    padding: 14px 16px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    line-height: 1.55;
+  }
+
+  .banner.show { display: block; }
+
+  .banner.success {
+    background: var(--accent-soft);
+    border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+    color: var(--ink);
+  }
+
+  .banner.error {
+    background: var(--danger-soft);
+    border: 1px solid color-mix(in srgb, var(--danger) 40%, transparent);
+    color: var(--ink);
+  }
+
+  footer {
+    margin-top: 20px;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    text-align: center;
+  }
+
+  footer code {
+    font-family: "IBM Plex Mono", monospace;
+    background: var(--accent-soft);
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+
+<div class="page">
+  <div class="masthead">
+    <span class="kicker">Générateur XLSForm · SurveyCTO</span>
+  </div>
+  <h1>Déposez votre questionnaire</h1>
+  <p class="intro">
+    Envoyez votre questionnaire (Word, Excel ou PDF) : il est converti automatiquement en
+    XLSForm au format SurveyCTO, puis envoyé par email avec les instructions de déploiement.
+  </p>
+
+  <form id="survey-form" autocomplete="off">
+    <div class="field">
+      <span class="step">01</span>
+      <div class="field-body">
+        <label for="nom_projet">Nom du projet</label>
+        <p class="hint">Sert à identifier le questionnaire et à nommer le fichier XLSForm généré.</p>
+        <input type="text" id="nom_projet" name="nom_projet" placeholder="ex. Enquête ménages Abidjan 2026" required />
+      </div>
+    </div>
+
+    <div class="field">
+      <span class="step">02</span>
+      <div class="field-body">
+        <label for="email_notification">Email de notification</label>
+        <p class="hint">L'XLSForm et les instructions de déploiement SurveyCTO y seront envoyés.</p>
+        <input type="email" id="email_notification" name="email_notification" placeholder="vous@organisation.org" required />
+      </div>
+    </div>
+
+    <div class="field">
+      <span class="step">03</span>
+      <div class="field-body">
+        <label for="questionnaire_file">Fichier du questionnaire</label>
+        <label class="drop" id="drop-zone" for="questionnaire_file">
+          <input type="file" id="questionnaire_file" name="questionnaire_file" accept=".docx,.xlsx,.pdf" required />
+          <span class="drop-label"><strong>Cliquez pour choisir</strong> ou glissez le fichier ici</span>
+          <div class="file-chip" id="file-chip"></div>
+        </label>
+        <p class="formats">Formats acceptés : .docx, .xlsx, .pdf</p>
+      </div>
+    </div>
+
+    <div class="field">
+      <span class="step">04</span>
+      <div class="field-body">
+        <label>Langue du formulaire</label>
+        <p class="hint">Langue utilisée pour les libellés générés dans le XLSForm.</p>
+        <div class="radio-row">
+          <label class="radio-opt"><input type="radio" name="language" value="fr" checked /> Français</label>
+          <label class="radio-opt"><input type="radio" name="language" value="en" /> English</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <span class="step">05</span>
+      <div class="field-body">
+        <label for="observations">Observations <span style="font-weight: 400; color: var(--ink-soft);">(facultatif)</span></label>
+        <p class="hint">Précisions utiles pour la conversion : sections à ignorer, logique de saut particulière, etc.</p>
+        <textarea id="observations" name="observations" placeholder="Toute remarque utile pour la génération…"></textarea>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button type="submit" class="submit" id="submit-btn">Envoyer le questionnaire</button>
+      <span class="status" id="status-text"></span>
+    </div>
+  </form>
+
+  <div class="banner" id="banner"></div>
+
+  <footer>Transmis directement au workflow <code>Generateur SurveyCTO Automatique</code>.</footer>
+</div>
+
+<script>
+  var WEBHOOK_URL = "https://davy77.app.n8n.cloud/webhook/surveycto-questionnaire";
+
+  var form = document.getElementById("survey-form");
+  var dropZone = document.getElementById("drop-zone");
+  var fileInput = document.getElementById("questionnaire_file");
+  var fileChip = document.getElementById("file-chip");
+  var submitBtn = document.getElementById("submit-btn");
+  var statusText = document.getElementById("status-text");
+  var banner = document.getElementById("banner");
+
+  function formatSize(bytes) {
+    if (bytes < 1024) return bytes + " o";
+    if (bytes < 1024 * 1024) return Math.round(bytes / 1024) + " Ko";
+    return (bytes / (1024 * 1024)).toFixed(1) + " Mo";
+  }
+
+  function showFile(file) {
+    if (!file) {
+      fileChip.classList.remove("show");
+      return;
+    }
+    fileChip.textContent = file.name + " · " + formatSize(file.size);
+    fileChip.classList.add("show");
+  }
+
+  fileInput.addEventListener("change", function () {
+    showFile(fileInput.files[0]);
+  });
+
+  ["dragenter", "dragover"].forEach(function (evt) {
+    dropZone.addEventListener(evt, function (e) {
+      e.preventDefault();
+      dropZone.classList.add("dragover");
+    });
+  });
+
+  ["dragleave", "drop"].forEach(function (evt) {
+    dropZone.addEventListener(evt, function (e) {
+      e.preventDefault();
+      dropZone.classList.remove("dragover");
+    });
+  });
+
+  dropZone.addEventListener("drop", function (e) {
+    var dt = e.dataTransfer;
+    if (dt && dt.files && dt.files.length) {
+      fileInput.files = dt.files;
+      showFile(dt.files[0]);
+    }
+  });
+
+  function setBanner(kind, message) {
+    banner.className = "banner show " + kind;
+    banner.textContent = message;
+  }
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    banner.className = "banner";
+
+    var file = fileInput.files[0];
+    if (!file) {
+      statusText.className = "status error";
+      statusText.textContent = "Ajoutez un fichier avant d'envoyer.";
+      return;
+    }
+
+    var language = form.querySelector('input[name="language"]:checked').value;
+
+    var data = new FormData();
+    data.append("nom_projet", document.getElementById("nom_projet").value);
+    data.append("email_notification", document.getElementById("email_notification").value);
+    data.append("observations", document.getElementById("observations").value);
+    data.append("language", language);
+    data.append("questionnaire_file", file, file.name);
+
+    submitBtn.disabled = true;
+    statusText.className = "status";
+    statusText.textContent = "Envoi en cours…";
+
+    fetch(WEBHOOK_URL, { method: "POST", body: data })
+      .then(function (res) {
+        if (!res.ok) throw new Error("Réponse " + res.status);
+        return res.text();
+      })
+      .then(function (text) {
+        statusText.textContent = "";
+        setBanner("success", text || "Questionnaire envoyé. Vous recevrez le fichier XLSForm SurveyCTO par email dans quelques minutes.");
+        form.reset();
+        showFile(null);
+      })
+      .catch(function (err) {
+        statusText.textContent = "";
+        setBanner("error", "L'envoi a échoué (" + err.message + "). Vérifiez votre connexion et réessayez, ou contactez la personne qui gère le workflow.");
+      })
+      .finally(function () {
+        submitBtn.disabled = false;
+      });
+  });
+</script>
