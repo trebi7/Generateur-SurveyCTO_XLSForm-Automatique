@@ -68,12 +68,23 @@
     font-family: "IBM Plex Sans", system-ui, sans-serif;
     display: flex;
     justify-content: center;
-    padding: clamp(24px, 5vw, 64px) 20px 80px;
+    padding: 0 20px 80px;
   }
 
   .page {
     width: 100%;
     max-width: 640px;
+  }
+
+  .header-sticky {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: var(--bg);
+    padding-top: clamp(24px, 5vw, 64px);
+    margin-top: calc(-1 * clamp(24px, 5vw, 64px));
+    padding-bottom: 18px;
+    border-bottom: 1px solid transparent;
   }
 
   .masthead {
@@ -106,7 +117,7 @@
     font-size: 0.98rem;
     line-height: 1.6;
     max-width: 54ch;
-    margin: 0 0 28px;
+    margin: 0;
   }
 
   form {
@@ -119,7 +130,7 @@
 
   .field {
     display: grid;
-    grid-template-columns: 34px 1fr;
+    grid-template-columns: 30px 1fr;
     gap: 14px;
     padding: 22px 24px;
     border-bottom: 1px solid var(--line);
@@ -128,10 +139,17 @@
   .field:last-of-type { border-bottom: none; }
 
   .step {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--accent-soft);
     font-family: "IBM Plex Mono", monospace;
-    font-size: 0.78rem;
+    font-size: 0.76rem;
+    font-weight: 500;
     color: var(--accent);
-    padding-top: 3px;
   }
 
   .field-body { min-width: 0; }
@@ -314,14 +332,16 @@
 </style>
 
 <div class="page">
-  <div class="masthead">
-    <span class="kicker">Générateur XLSForm · SurveyCTO</span>
+  <div class="header-sticky">
+    <div class="masthead">
+      <span class="kicker">Générateur XLSForm · SurveyCTO</span>
+    </div>
+    <h1>Déposez votre questionnaire</h1>
+    <p class="intro">
+      Envoyez votre questionnaire (Word, Excel ou PDF) : il est converti automatiquement en
+      XLSForm au format SurveyCTO, puis envoyé par email avec les instructions de déploiement.
+    </p>
   </div>
-  <h1>Déposez votre questionnaire</h1>
-  <p class="intro">
-    Envoyez votre questionnaire (Word, Excel ou PDF) : il est converti automatiquement en
-    XLSForm au format SurveyCTO, puis envoyé par email avec les instructions de déploiement.
-  </p>
 
   <form id="survey-form" autocomplete="off">
     <div class="field">
