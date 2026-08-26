@@ -927,11 +927,13 @@
       placeholder_observations: "Ex : La section ménage est un roster. Vérifiez que les numéros de téléphone ont bien 10 chiffres. Accordez une attention particulière à la question 7 sur les sources de financement.",
       btn_submit: 'Générer mon XLSForm',
       progress_title: '⚙️ Traitement en cours…',
-      progress_subtitle: 'Votre questionnaire est en cours de traitement. Ne fermez pas cet onglet.<br>Cette opération prend <strong>1 à 3 minutes</strong>.',
+      progress_subtitle: 'Votre questionnaire est en cours de traitement. Ne fermez pas cet onglet.<br>Cette opération prend <strong>4 à 5 minutes</strong>.',
       tl0_label: 'Fichier reçu',
       tl1_label: 'Analyse du questionnaire',
       tl2_label: 'Génération du XLSForm',
-      tl3_label: 'Validation &amp; correction automatique',
+      tl3_label: 'Validation & correction automatique',
+    eta_prefix: 'temps restant estimé :',
+    eta_finishing: 'finalisation…',
       tl4_label: 'Enregistrement sur Google Drive',
       tl5_label: "Envoi de l'e-mail",
       tl_done: 'Terminé',
@@ -982,11 +984,13 @@
       placeholder_observations: 'E.g.: The household section is a roster. Make sure phone numbers have exactly 10 digits. Pay special attention to question 7 about funding sources.',
       btn_submit: 'Generate my XLSForm',
       progress_title: '⚙️ Processing…',
-      progress_subtitle: 'Your questionnaire is being processed. Do not close this tab.<br>This takes <strong>1 to 3 minutes</strong>.',
+      progress_subtitle: 'Your questionnaire is being processed. Do not close this tab.<br>This takes <strong>4 to 5 minutes</strong>.',
       tl0_label: 'File received',
       tl1_label: 'Analyzing questionnaire',
       tl2_label: 'Generating the XLSForm',
-      tl3_label: 'Validation &amp; automatic correction',
+      tl3_label: 'Validation & automatic correction',
+    eta_prefix: 'estimated time left:',
+    eta_finishing: 'finishing up…',
       tl4_label: 'Saving to Google Drive',
       tl5_label: 'Sending the email',
       tl_done: 'Done',
@@ -1193,15 +1197,42 @@
   });
 
   /* ── Progress timeline + barre de progression globale ── */
-  // Chaque étape porte son propre pourcentage cible (cumulé) atteint une fois "done".
-  // Timeline: submit → step1 actif @3s, terminé @12s (20%) | step2 @12s→70s (55%) | etc.
+  // Calage sur les durées réellement mesurées en production : 12 exécutions réelles
+  // relevées du 18 au 25 août 2026 donnent un traitement complet de 3 min 16 s à
+  // 4 min 32 s, et l'e-mail part à la seconde même où le workflow se termine.
+  // L'ancienne piste s'arrêtait à 1 min 43 s : elle annonçait « terminé » près de
+  // trois minutes avant l'arrivée du mail. Le poste dominant est un unique appel
+  // au modèle, qui représente 96 % du temps total.
   const STEP_DEFS = [
-    { id: 1, activeAt: 3000,  doneAt: 12000,  pct: 20,  labelKey: 'tl1_label', activeKey: 'tl1_active' },
-    { id: 2, activeAt: 12000, doneAt: 70000,  pct: 55,  labelKey: 'tl2_label', activeKey: 'tl2_active' },
-    { id: 3, activeAt: 70000, doneAt: 82000,  pct: 75,  labelKey: 'tl3_label', activeKey: 'tl3_active' },
-    { id: 4, activeAt: 82000, doneAt: 92000,  pct: 90,  labelKey: 'tl4_label', activeKey: 'tl4_active' },
-    { id: 5, activeAt: 92000, doneAt: 102000, pct: 100, labelKey: 'tl5_label', activeKey: 'tl5_active' }
+    { id: 1, activeAt:   2000, doneAt:  14000, pct:   5, labelKey: 'tl1_label', activeKey: 'tl1_active' },
+    { id: 2, activeAt:  14000, doneAt: 245000, pct:  88, labelKey: 'tl2_label', activeKey: 'tl2_active' },
+    { id: 3, activeAt: 245000, doneAt: 257000, pct:  93, labelKey: 'tl3_label', activeKey: 'tl3_active' },
+    { id: 4, activeAt: 257000, doneAt: 267000, pct:  97, labelKey: 'tl4_label', activeKey: 'tl4_active' },
+    { id: 5, activeAt: 267000, doneAt: 275000, pct: 100, labelKey: 'tl5_label', activeKey: 'tl5_active' }
   ];
+  const TOTAL_MS = 275000;
+
+  // Points d'ancrage (temps, pourcentage) entre lesquels la barre est interpolée.
+  // Sans eux, elle resterait figée sur 5 % pendant les quatre minutes que dure la
+  // génération, ce qui se lit comme un plantage.
+  const ANCRES = [[0, 2]].concat(STEP_DEFS.map(function(s) { return [s.doneAt, s.pct]; }));
+
+  function pourcentageA(ms) {
+    if (ms >= TOTAL_MS) return 100;
+    for (let i = 1; i < ANCRES.length; i++) {
+      const t0 = ANCRES[i - 1][0], p0 = ANCRES[i - 1][1];
+      const t1 = ANCRES[i][0],     p1 = ANCRES[i][1];
+      if (ms <= t1) return p0 + (p1 - p0) * (ms - t0) / (t1 - t0);
+    }
+    return 100;
+  }
+
+  function tempsRestant(ms) {
+    const reste = Math.max(0, Math.round((TOTAL_MS - ms) / 1000));
+    if (reste <= 0) return t('eta_finishing');
+    const m = Math.floor(reste / 60), sec = reste % 60;
+    return t('eta_prefix') + ' ' + (m > 0 ? m + ' min ' + (sec < 10 ? '0' : '') + sec + ' s' : sec + ' s');
+  }
 
   let progressTimers = [];
   let currentStepState = 0; // 0 = "Fichier reçu", 1-5 = active, -1..-5 = done (negative marks step done, magnitude = id)
@@ -1209,7 +1240,7 @@
 
   function setProgressBar(pct, labelKey) {
     progressFill.style.width = pct + '%';
-    progressPct.textContent = pct;
+    progressPct.textContent = Math.round(pct);
     if (labelKey) progressText.textContent = t(labelKey);
   }
 
@@ -1235,46 +1266,60 @@
   }
 
   function startProgress(userEmail) {
-    // Mettre à jour l'adresse dans le bloc final
-    sentEmailAddr.textContent = userEmail;
-    setProgressBar(5, 'tl0_label');
+    // L'élément est re-résolu ici : #sent-email-addr est recréé par applyLanguage()
+    // (data-i18n-html réécrit tout le innerHTML du bloc). Une référence capturée au
+    // chargement de la page pointerait sur un nœud détaché du document, et l'adresse
+    // n'apparaîtrait plus après un changement de langue.
+    const cibleEmail = document.getElementById('sent-email-addr');
+    if (cibleEmail) cibleEmail.textContent = userEmail;
 
-    STEP_DEFS.forEach(step => {
-      const itemEl     = document.getElementById('tl-' + step.id);
-      const statusEl   = document.getElementById('tl-' + step.id + '-status');
+    setProgressBar(2, 'tl0_label');
 
-      // Active
-      const t1 = setTimeout(function() {
-        itemEl.classList.add('active');
-        stepStatus[step.id] = 'active';
-        statusEl.textContent = t(step.activeKey);
-        progressText.textContent = t(step.labelKey);
-      }, step.activeAt);
+    const depart = Date.now();
 
-      // Done
-      const t2 = setTimeout(function() {
-        itemEl.classList.remove('active');
-        itemEl.classList.add('done');
-        stepStatus[step.id] = 'done';
-        statusEl.textContent = (step.id === 5) ? t('tl5_done') : t('tl_done_check');
-        setProgressBar(step.pct, step.labelKey);
+    const tic = setInterval(function() {
+      const ecoule = Date.now() - depart;
+      setProgressBar(pourcentageA(ecoule), null);
 
-        // Dernier step → afficher le succès final
-        if (step.id === 5) {
-          setTimeout(function() {
-            finalSuccess.classList.add('visible');
-            progressText.textContent = t('progress_step_text_final');
-            // Mettre à jour onglet 3
-            document.getElementById('tab-2').classList.remove('active');
-            document.getElementById('tab-2').classList.add('done');
-            document.getElementById('tab-3').classList.remove('active');
-            document.getElementById('tab-3').classList.add('active');
-          }, 600);
+      STEP_DEFS.forEach(function(step) {
+        const itemEl   = document.getElementById('tl-' + step.id);
+        const statusEl = document.getElementById('tl-' + step.id + '-status');
+        if (ecoule >= step.doneAt) {
+          if (stepStatus[step.id] !== 'done') {
+            itemEl.classList.remove('active');
+            itemEl.classList.add('done');
+            stepStatus[step.id] = 'done';
+            statusEl.textContent = (step.id === 5) ? t('tl5_done') : t('tl_done_check');
+          }
+        } else if (ecoule >= step.activeAt) {
+          if (stepStatus[step.id] !== 'active') {
+            itemEl.classList.add('active');
+            stepStatus[step.id] = 'active';
+            statusEl.textContent = t(step.activeKey);
+          }
         }
-      }, step.doneAt);
+      });
 
-      progressTimers.push(t1, t2);
-    });
+      const active = STEP_DEFS.find(function(s) { return stepStatus[s.id] === 'active'; });
+      if (active) progressText.textContent = t(active.labelKey) + ' — ' + tempsRestant(ecoule);
+      else if (ecoule < STEP_DEFS[0].activeAt) progressText.textContent = t('tl0_label') + ' — ' + tempsRestant(ecoule);
+
+      if (ecoule >= TOTAL_MS) {
+        clearInterval(tic);
+        setProgressBar(100, null);
+        finalSuccess.classList.add('visible');
+        progressText.textContent = t('progress_step_text_final');
+        document.getElementById('tab-2').classList.remove('active');
+        document.getElementById('tab-2').classList.add('done');
+        document.getElementById('tab-3').classList.add('active');
+      }
+    }, 250);
+
+    // clearTimeout et clearInterval partagent le même espace d'identifiants : le
+    // progressTimers.forEach(clearTimeout) de clearProgress() annule donc bien cet
+    // intervalle. C'est ce qui corrige l'écran de succès qui réapparaissait par-dessus
+    // le formulaire réinitialisé quand on cliquait « Soumettre un autre questionnaire ».
+    progressTimers.push(tic);
   }
 
   function clearProgress() {
