@@ -748,6 +748,24 @@
           <div class="error-msg" id="err-email" data-i18n="err_email">Veuillez saisir une adresse e-mail valide.</div>
         </div>
 
+        <!-- Clé d'accès (reçue par email après paiement Chariow) -->
+        <div class="field-group">
+          <label for="cle_abonnement">
+            <span data-i18n="label_cle">Clé d'accès</span> <span class="required">*</span>
+          </label>
+          <div class="field-hint" data-i18n-html="hint_cle">Reçue par email après votre paiement Chariow. Saisissez-la avec la même adresse email que pour le paiement. <a href="https://trebi7.github.io/Packs-Data-Analyst/activer.html" target="_blank" rel="noopener">Recevoir ma clé</a></div>
+          <input
+            type="text"
+            id="cle_abonnement"
+            name="cle_abonnement"
+            placeholder="Ex. CTO-4F2A-9QRT"
+            autocomplete="off"
+            spellcheck="false"
+            style="text-transform:uppercase"
+            required>
+          <div class="error-msg" id="err-cle_abonnement" data-i18n="err_cle">Saisissez la clé reçue par email après votre paiement.</div>
+        </div>
+
         <hr class="divider">
 
         <!-- Observations -->
@@ -921,6 +939,11 @@
       hint_email: 'Le lien Google Drive vers votre XLSForm vous sera envoyé à cette adresse',
       placeholder_email: 'votre@email.com',
       err_email: 'Veuillez saisir une adresse e-mail valide.',
+      label_cle: "Clé d'accès",
+      hint_cle: 'Reçue par email après votre paiement Chariow. Saisissez-la avec la même adresse email que pour le paiement. <a href="https://trebi7.github.io/Packs-Data-Analyst/activer.html" target="_blank" rel="noopener">Recevoir ma clé</a>',
+      err_cle: 'Saisissez la clé reçue par email après votre paiement.',
+      cle_checking: 'Vérification de votre clé…',
+      cle_unreachable: 'La vérification de votre clé n\'a pas répondu. Réessayez dans un instant.',
       label_observations: 'Observations / Instructions complémentaires',
       optional_tag: '(facultatif)',
       hint_observations: 'Précisez des instructions spécifiques : sections roster, contraintes particulières, logiques de saut, numéros de téléphone obligatoires, etc.',
@@ -978,6 +1001,11 @@
       hint_email: 'The Google Drive link to your XLSForm will be sent to this address',
       placeholder_email: 'your@email.com',
       err_email: 'Please enter a valid email address.',
+      label_cle: 'Access key',
+      hint_cle: 'Sent to you by email after your Chariow payment. Enter it with the same email address you paid with. <a href="https://trebi7.github.io/Packs-Data-Analyst/activer.html" target="_blank" rel="noopener">Get my key</a>',
+      err_cle: 'Enter the key you received by email after your payment.',
+      cle_checking: 'Checking your key…',
+      cle_unreachable: 'The key check did not respond. Please try again in a moment.',
       label_observations: 'Observations / Additional instructions',
       optional_tag: '(optional)',
       hint_observations: 'Specify any particular instructions: roster sections, specific constraints, skip logic, required phone numbers, etc.',
@@ -1183,6 +1211,11 @@
     if (!emailRe.test(email.value.trim())) { showError('err-email', t('err_email')); valid = false; }
     else clearError('err-email');
 
+    const cle = document.getElementById('cle_abonnement');
+    cle.value = cle.value.trim().toUpperCase();
+    if (cle.value.length < 8) { showError('err-cle_abonnement', t('err_cle')); valid = false; }
+    else clearError('err-cle_abonnement');
+
     return valid;
   }
 
@@ -1337,8 +1370,43 @@
   }
 
   /* ── Soumission ── */
+  // Le crédit n'est retiré qu'à la génération, côté serveur. Ici on vérifie seulement
+  // que l'email et la clé ouvrent bien ce pack, pour éviter un envoi voué au refus.
+  let cleVerifiee = false;
   form.addEventListener('submit', function(e) {
     if (!validateForm()) { e.preventDefault(); return; }
+    if (!cleVerifiee) {
+      e.preventDefault();
+      const libelle = btnSubmit.innerHTML;
+      btnSubmit.disabled = true;
+      btnSubmit.textContent = t('cle_checking');
+      fetch('https://davy77.app.n8n.cloud/webhook/abonnement-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          produit: 'surveycto',
+          email_notification: document.getElementById('email_notification').value.trim(),
+          cle_abonnement: document.getElementById('cle_abonnement').value.trim().toUpperCase(),
+          mode: 'check',
+          ui_lang: currentLang
+        })
+      })
+        .then(function(r) { return r.json().catch(function() { return { ok: false }; }); })
+        .catch(function() { return { ok: false, message: t('cle_unreachable') }; })
+        .then(function(res) {
+          btnSubmit.innerHTML = libelle;
+          btnSubmit.disabled = false;
+          if (res && res.ok) {
+            cleVerifiee = true;
+            if (typeof form.requestSubmit === 'function') form.requestSubmit(); else form.dispatchEvent(new Event('submit', { cancelable: true })) && form.submit();
+          } else {
+            showError('err-cle_abonnement', (res && res.message) || t('cle_unreachable'));
+            document.getElementById('cle_abonnement').focus();
+          }
+        });
+      return;
+    }
+    cleVerifiee = false;
 
     const userEmail = document.getElementById('email_notification').value.trim();
 
